@@ -26,7 +26,7 @@ import time
 vol_regex = 'AP_ARTFL_vols\/AP(vol[0-9]{1,2}).xml'
 page_regex = '<pb n="[\s0-9]+" facs="[\s\S]{0,300}" \/> [\s\S]{0,10000} <pb'
 
-
+# Parses the Encyclopedie files to extract all the words
 def parseEnc():
 	# Assumes all xml files are stored in a Docs folder in the same directory as the python file
     files = os.listdir("Encyclopedie/")
@@ -79,9 +79,7 @@ def checkErrors(enc_words, french_stopwords):
 	    	num_words_vol = 0
     		word_freq = {}
 
-	    	# pages = re.findall(r'<pb n="[\s0-9]+" facs="[\s\S]{0,300}" \/> [\s\S]{0,10000} <pb', contents)
-	    	# pages = re.findall(r'<pb n="[\s0-9]+" facs="[\s\S]{0,300}" \/> [\s\S]{0,8000} <pb', contents)
-	    	# pages = re.findall(r'<pb n="[\s0-9]+" facs="[\s\S]{0,300}" \/>', contents)
+	    	# Iterate through contents and find all page tags
 	    	pb_tags = []
 	    	last_index = 0
 	    	while True:
@@ -91,20 +89,13 @@ def checkErrors(enc_words, french_stopwords):
 	    		pb_tags.append(loc)
 	    		last_index = loc + 1
 
-	    	# Capture total number of words per vol and per page
-	    	# Capture the words in a dictionary to also get frequency
-
-	    	## SORT DICTIONARY WITHIN VOLUME
-
-	    	# Create empty array, iterate through text and do contents.find for every <pb> tag while changing the substring
+	    	# Iterates through all page tags and looks through the contents on each page, checking each word against the
+	    	# words contained in the Encyclodpedie
 	    	for i in range(0, len(pb_tags)-1):
 	    		contents_substr = contents[pb_tags[i]:pb_tags[i+1]]
 	    		page_num = BeautifulSoup(contents_substr, 'lxml').find_all('pb')
 	    		pb_soup = BeautifulSoup(contents_substr, 'lxml')
-	    	# for i in range(0, len(pages)-1):
-	    	# 	regex = pages[i] + '[\s\S]+' + pages[i+1]
-	    	# 	page = re.findall(re.compile(regex), contents)[0]
-	    		# page_num = BeautifulSoup(page, 'lxml').find_all('pb')
+
 	    		pageno = volno + "_pg" + page_num[0].get("n")
 	    		error_per_page = 0
 	    		num_words_pg = 0
@@ -112,7 +103,6 @@ def checkErrors(enc_words, french_stopwords):
 	    		text = unicode(contents_substr,"ascii", errors = "ignore")
 	    		text = remove_diacritic(text).decode('utf-8')
     			paragraph = remove_stopwords(text, french_stopwords)
-	    		# para = para.replace("s'","").replace("l'","").replace("d'","")
 	    		paragraph = paragraph.replace("\n"," ").replace(")", "").replace("*","").replace(":","").replace("-","").replace("_","").replace("(","").replace("& ","").replace("; ","").replace(".","").replace(",","").replace("?","").replace("!","")
 	    		paragraph = re.sub(r'([0-9]{1,4})', ' ', paragraph)
 	    		words = paragraph.split(" ")
@@ -127,54 +117,12 @@ def checkErrors(enc_words, french_stopwords):
 	    				error_per_page += 1
 	    				num_errors += 1
 
-		    	# paragraphs = pb_soup.find_all('p')
-
-
-		    	# print("Before inner for loop = %f" % time.time())
-		    	# for para in paragraphs:
-		    	# 	while para.find("note"):
-		    	# 		para.note.extract()
-		    	# 	para = para.get_text().lower()
-		    	# 	para = remove_diacritic(para).decode('utf-8')
-		    	# 	para = para.replace("'", " ")
-	    		# 	paragraph = remove_stopwords(para, french_stopwords)
-		    	# 	# para = para.replace("s'","").replace("l'","").replace("d'","")
-		    	# 	paragraph = paragraph.replace("\n"," ").replace(")", "").replace("*","").replace(":","").replace("-","").replace("_","").replace("(","").replace("& ","").replace("; ","").replace(".","").replace(",","").replace("?","").replace("!","")
-		    	# 	paragraph = re.sub(r'([0-9]{1,4})', ' ', paragraph)
-		    	# 	words = paragraph.split(" ")
-		    	# 	for word in words:
-		    	# 		if word not in enc_words:
-		    	# 			error_per_page += 1
-		    	# 			num_errors += 1
-		    	# print("After inner for loop = %f" % time.time())
 		    	errors_per_page[pageno] = [error_per_page, num_words_pg]
 
-	    	# Iterate through all pairs of the page numbers found and use those to bound the regex (i.e. concatenate the two together
-	    	# to form one regex. Have the characters in between the two regexs be enough)
-	    	# Use the pg number from the first regex as the number for that page
-	    	# for page in pages:
-	    	# 	page_num = BeautifulSoup(page, 'lxml').find_all('pb')
-	    	# 	pageno = volno + "_pg" + page_num[0].get("n")
-	    	# 	error_per_page = 0
-		    # 	paragraphs = soup.find_all('p')
-		    # 	for para in paragraphs:
-		    # 		if para.find("note"):
-		    # 			para.note.extract()
-		    # 		para = para.get_text().lower()
-		    # 		para = remove_diacritic(para).decode('utf-8')
-		    # 		para = para.replace("'", " ")
-	    	# 		paragraph = remove_stopwords(para, french_stopwords)
-		    # 		# para = para.replace("s'","").replace("l'","").replace("d'","")
-		    # 		paragraph = paragraph.replace("\n"," ").replace(")", "").replace("*","").replace(":","").replace("-","").replace("_","").replace("(","").replace("& ","").replace("; ","").replace(".","").replace(",","").replace("?","").replace("!","")
-		    # 		paragraph = re.sub(r'([0-9]{1,4})', ' ', paragraph)
-		    # 		words = paragraph.split(" ")
-		    # 		for word in words:
-		    # 			if word not in enc_words:
-		    # 				error_per_page += 1
-		    # 				num_errors += 1
-		    # 	errors_per_page[pageno] = error_per_page
-		word_freq_wrong[volno] = word_freq
+		word_freq_wrong[volno] = sorted(word_freq.items(), key = lambda kv: kv[1])
 	   	errors_per_vol[volno] = [num_errors, num_words_vol]
+	
+	# Save and output errors per volume
 	with open("errors_per_vol.pickle", 'wb') as handle:
 		pickle.dump(errors_per_vol, handle, protocol = 0)
 	w = csv.writer(open("errors_per_vol.csv", "w"))
@@ -183,6 +131,7 @@ def checkErrors(enc_words, french_stopwords):
 			key = unicode(key,"ascii", errors = "ignore")
 		w.writerow([key,val[0],val[1]])
 
+	# Save and output errors per page
 	with open("errors_per_page.pickle", 'wb') as handle:
 		pickle.dump(errors_per_page, handle, protocol = 0)
 	w = csv.writer(open("errors_per_page.csv", "w"))
@@ -191,6 +140,7 @@ def checkErrors(enc_words, french_stopwords):
 			key = unicode(key,"ascii", errors = "ignore")
 		w.writerow([key,val[0],val[1]])
 
+	# Save and output frequency of errors per word per volume
 	with open("word_freq_errors.pickle", 'wb') as handle:
 		pickle.dump(word_freq_wrong, handle, protocol = 0)
 	w = csv.writer(open("word_freq_errors.csv", "w"))
@@ -215,8 +165,4 @@ if __name__ == '__main__':
 		word_to_append = remove_diacritic(unicode(word[0].replace("\n","").replace("\r",""), 'utf-8'))
 		french_stopwords.append(word_to_append)
 	checkErrors(enc_words, french_stopwords)
-	# errors_per_vol = pickle.load(open("errors_per_vol.pickle", "rb"))
-	# w = csv.writer(open("errors_per_vol.csv", "w"))
-	# for key, val in errors_per_vol.items():
-	# 	w.writerow([key,val])
 
