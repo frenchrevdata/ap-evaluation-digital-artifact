@@ -21,29 +21,17 @@ import os
 import gzip
 from make_ngrams import compute_ngrams
 import xlsxwriter
-from processing_functions import remove_diacritic, load_speakerlist
+from processing_functions import remove_diacritic, load_speakerlist, write_to_excel
 from make_ngrams import make_ngrams
 from parse_speaker_names import compute_speaker_Levenshtein_distance, read_names
 
 
-#Seance followed by less than or equal to 4 line breaks (\n) then date value =
-daily_regex = '(?:Séance[\s\S]{0,200}<date value=\")(?:[\s\S]+)(?:Séance[\s\S]{0,200}<date value=\")'
 page_regex = '(?:n=\"([A-Z0-9]+)" id="[a-z0-9_]+")\/>([\s\S]{1,9000})<pb '
 vol_regex = 'AP_ARTFL_vols\/AP(vol[0-9]{1,2}).xml'
 footnote_regex = r'<note place="foot">[\w\W]+<\/note>'
 
-speechid_to_speaker = {}
-speakers_seen = set()
-speaker_dists = []
-speaker_dists_split = []
 footnotes = []
-names_not_caught = set()
-speeches_per_day = {}
-speakers_using_find = set()
 speakers = set()
-speaker_num_total_speeches = {}
-speaker_num_total_chars = {}
-speakers_per_session = {}
 global speaker_list
 
 def parseFiles(raw_speeches, multiple_speakers):
@@ -56,7 +44,7 @@ def parseFiles(raw_speeches, multiple_speakers):
         if filename.endswith(".xml"):
         	print(filename)
         	filename = open('AP_ARTFL_vols/' + filename, "r")
-        	# Extracts volume number to keep track of for names_not_caught and speakers_using_find
+        	# Extracts volume number
         	volno = re.findall(vol_regex, str(filename))[0]
         	contents = filename.read()
         	soup = BeautifulSoup(contents, 'lxml')
@@ -145,9 +133,6 @@ if __name__ == '__main__':
 
 	footnotes = pd.DataFrame(footnotes, columns = ["Footnote", "Speaker", "Speechid", "Volno"])
 
-	write_to = pd.ExcelWriter("footnotes.xlsx")
-	footnotes.to_excel(write_to, 'Sheet1')
-	write_to.save()
-
+	write_to_excel(footnotes, "footnotes.xlsx")
        
    	

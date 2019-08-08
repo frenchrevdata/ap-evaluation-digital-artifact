@@ -1,5 +1,4 @@
-# extract all i tags and sc tags and note tags
-# look only at p tags
+""" Iterates through all the ARTFL XML files to find ocr errors based on the Encyclopedie """
 
 from bs4 import BeautifulSoup
 import unicodedata
@@ -17,7 +16,7 @@ import os
 import gzip
 from make_ngrams import compute_ngrams
 import xlsxwriter
-from processing_functions import remove_diacritic, load_speakerlist
+from processing_functions import remove_diacritic, load_speakerlist, store_to_pickle
 from make_ngrams import make_ngrams
 from parse_speaker_names import compute_speaker_Levenshtein_distance
 import time
@@ -28,7 +27,7 @@ page_regex = '<pb n="[\s0-9]+" facs="[\s\S]{0,300}" \/> [\s\S]{0,10000} <pb'
 
 # Parses the Encyclopedie files to extract all the words
 def parseEnc():
-	# Assumes all xml files are stored in a Docs folder in the same directory as the python file
+	# Assumes all xml files are stored in a docs folder in the same directory as the python file
     files = os.listdir("Encyclopedie/")
     words = set()
     for filename in files:
@@ -123,8 +122,7 @@ def checkErrors(enc_words, french_stopwords):
 	   	errors_per_vol[volno] = [num_errors, num_words_vol]
 	
 	# Save and output errors per volume
-	with open("errors_per_vol.pickle", 'wb') as handle:
-		pickle.dump(errors_per_vol, handle, protocol = 0)
+	store_to_pickle(errors_per_vol, "errors_per_vol.pickle")
 	w = csv.writer(open("errors_per_vol.csv", "w"))
 	for key, val in errors_per_vol.items():
 		if isinstance(key, str):
@@ -132,17 +130,15 @@ def checkErrors(enc_words, french_stopwords):
 		w.writerow([key,val[0],val[1]])
 
 	# Save and output errors per page
-	with open("errors_per_page.pickle", 'wb') as handle:
-		pickle.dump(errors_per_page, handle, protocol = 0)
+	store_to_pickle(error_per_page, "errors_per_page.pickle")
 	w = csv.writer(open("errors_per_page.csv", "w"))
 	for key, val in errors_per_page.items():
 		if isinstance(key, str):
 			key = unicode(key,"ascii", errors = "ignore")
-		w.writerow([key,val[0],val[1]])
+		w.writerow([key.encode("utf-8", errors="ignore"),val[0],val[1]])
 
 	# Save and output frequency of errors per word per volume
-	with open("word_freq_errors.pickle", 'wb') as handle:
-		pickle.dump(word_freq_wrong, handle, protocol = 0)
+	store_to_pickle(word_freq_wrong, "word_freq_errors.pickle")
 	w = csv.writer(open("word_freq_errors.csv", "w"))
 	for key, val in word_freq_wrong.items():
 		w.writerow([key,val])
